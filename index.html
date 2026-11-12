@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS329Z 学习笔记 · Engineering AI Agents</title>
+<style>
+  :root{
+    --text:#1f2328;
+    --text-soft:#5c6570;
+    --text-mute:#8b949e;
+    --line:#e2e5e9;
+    --line-soft:#eef0f2;
+    --bg:#ffffff;
+    --bg-soft:#fafbfc;
+    --accent:#31496b;
+    --accent-soft:#eef1f5;
+    --ok:#4a7c59;
+    --bad:#a05252;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif;
+    font-size:16px;
+    line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:baseline;gap:14px;
+    padding:14px 28px;
+    border-bottom:1px solid var(--line);
+    background:var(--bg);
+  }
+  .topbar .brand{font-size:15px;font-weight:600;letter-spacing:.01em;}
+  .topbar .sub{font-size:13px;color:var(--text-mute);}
+
+  /* ---------- 布局 ---------- */
+  .layout{display:flex;align-items:flex-start;}
+  .sidebar{
+    position:sticky;top:53px;
+    width:250px;flex:0 0 250px;
+    max-height:calc(100vh - 53px);
+    overflow-y:auto;
+    padding:26px 18px 60px 28px;
+    border-right:1px solid var(--line-soft);
+  }
+  .sidebar h2{
+    margin:0 0 12px;
+    font-size:11px;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--text-mute);
+  }
+  .sidebar ol{list-style:none;margin:0;padding:0;}
+  .sidebar li{margin:0;}
+  .sidebar li a, .sidebar li span{
+    display:block;
+    padding:6px 10px 6px 12px;
+    margin-left:-12px;
+    font-size:14px;
+    color:var(--text-soft);
+    border-left:2px solid transparent;
+    border-radius:0 4px 4px 0;
+  }
+  .sidebar li a:hover{background:var(--bg-soft);text-decoration:none;}
+  .sidebar li.active a{
+    color:var(--accent);font-weight:600;
+    border-left-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .sidebar li span{color:#b6bcc4;cursor:default;}
+  .sidebar .counter{font-size:11px;color:var(--text-mute);padding-left:12px;}
+  .side-toc{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);}
+  .side-toc ol li a{font-size:13px;padding-top:4px;padding-bottom:4px;}
+
+  .content{
+    flex:1 1 auto;
+    min-width:0;
+    max-width:820px;
+    padding:44px 40px 120px;
+  }
+
+  /* ---------- 文章排印 ---------- */
+  .eyebrow{
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--text-mute);margin-bottom:10px;
+  }
+  h1{
+    font-size:29px;line-height:1.35;font-weight:650;
+    margin:0 0 10px;letter-spacing:-.01em;
+  }
+  .byline{font-size:13.5px;color:var(--text-mute);margin-bottom:8px;}
+  .byline code{font-size:12.5px;}
+  .lede{
+    font-size:16.5px;color:var(--text-soft);
+    border-left:2px solid var(--line);
+    padding-left:16px;margin:22px 0 34px;
+  }
+  h2{
+    font-size:20px;font-weight:650;
+    margin:52px 0 6px;padding-top:8px;
+    letter-spacing:-.005em;
+  }
+  h2 .num{
+    display:inline-block;min-width:1.6em;
+    color:var(--text-mute);font-weight:600;
+  }
+  h3{font-size:16px;font-weight:650;margin:30px 0 8px;}
+  h4{font-size:14.5px;font-weight:650;margin:22px 0 6px;color:var(--text-soft);}
+  p{margin:12px 0;}
+  ul,ol{margin:12px 0;padding-left:22px;}
+  li{margin:6px 0;}
+  strong{font-weight:650;}
+  em{font-style:normal;color:var(--text-soft);}
+  hr{border:none;border-top:1px solid var(--line-soft);margin:44px 0;}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.88em;background:var(--bg-soft);
+    border:1px solid var(--line-soft);border-radius:3px;
+    padding:.1em .35em;
+  }
+  .dim{color:var(--text-mute);}
+
+  .section-note{font-size:14px;color:var(--text-mute);margin:2px 0 14px;}
+
+  .note{
+    margin:20px 0;padding:14px 18px;
+    background:var(--bg-soft);
+    border:1px solid var(--line-soft);
+    border-left:2px solid var(--accent);
+    font-size:15px;color:var(--text);
+  }
+  .note .label{
+    display:block;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--text-mute);margin-bottom:4px;
+  }
+  .note p{margin:6px 0;}
+  .note p:first-of-type{margin-top:2px;}
+
+  table{
+    width:100%;border-collapse:collapse;
+    margin:18px 0;font-size:14.5px;
+  }
+  th,td{
+    text-align:left;vertical-align:top;
+    padding:9px 12px;border-bottom:1px solid var(--line-soft);
+  }
+  th{
+    font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--text-mute);font-weight:600;border-bottom:1px solid var(--line);
+  }
+  td:first-child{white-space:nowrap;font-weight:600;}
+
+  /* ---------- 图表 ---------- */
+  figure.fig{margin:26px 0;}
+  figure.fig svg{display:block;width:100%;height:auto;}
+  figure.fig figcaption{
+    font-size:12.5px;color:var(--text-mute);
+    margin-top:10px;line-height:1.65;
+  }
+  svg text{font-family:inherit;}
+
+  /* ---------- 卡片组 ---------- */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0;}
+  .cards .card{border:1px solid var(--line);padding:12px 14px;background:var(--bg);}
+  .cards .card b{display:block;font-size:13.5px;font-weight:650;margin-bottom:3px;}
+  .cards .card span{font-size:12.5px;color:var(--text-soft);line-height:1.65;display:block;}
+
+  .pager{
+    display:flex;justify-content:space-between;gap:16px;
+    margin-top:60px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:14px;
+  }
+  .pager .next{text-align:right;color:var(--text-mute);}
+
+  /* ---------- 小屏 ---------- */
+  @media (max-width:900px){
+    .topbar{padding:12px 18px;}
+    .layout{display:block;}
+    .sidebar{
+      position:static;width:auto;max-height:none;
+      border-right:none;border-bottom:1px solid var(--line-soft);
+      padding:18px 18px 20px;
+    }
+    .sidebar ol{display:flex;flex-wrap:wrap;gap:4px;}
+    .sidebar li a,.sidebar li span{margin-left:0;border-left:none;border-radius:4px;padding:5px 9px;}
+    .sidebar li.active a{border-left:none;}
+    .side-toc{display:none;}
+    .content{padding:28px 18px 80px;}
+    h1{font-size:24px;}
+    h2{font-size:18px;margin-top:40px;}
+    .cards{grid-template-columns:1fr 1fr;}
+    table{font-size:13.5px;}
+    th,td{padding:8px 8px;}
+  }
+  @media (max-width:560px){
+    .cards{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- 共享箭头定义 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="mAc" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#31496b"/>
+    </marker>
+    <marker id="mMu" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#8b949e"/>
+    </marker>
+    <marker id="mRd" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#a05252"/>
+    </marker>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <span class="brand">CS329Z 学习笔记</span>
+  <span class="sub">Engineering AI Agents · Stanford Fall 2026</span>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <h2>课程目录</h2>
+    <ol id="lecture-nav">
+      <li class="active"><a href="#top">第 1 讲 · Intro to Agentic Systems</a></li>
+      <li><span>第 2 讲 · LLMs for Builders</span></li>
+      <li><span>第 3 讲 · RAG</span></li>
+      <li><span>第 4 讲 · Tool Use &amp; Function Calling</span></li>
+      <li><span>第 5 讲 · Frameworks &amp; Orchestration</span></li>
+      <li><span>第 6 讲 · Agent Design Patterns</span></li>
+      <li><span>第 7 讲 · Agent Memory</span></li>
+      <li><span>第 8 讲 · Multi-Agent Systems</span></li>
+      <li><span>第 9 讲 · Optimization</span></li>
+      <li><span>第 10 讲 · Data for Agentic Systems</span></li>
+      <li><span>第 11 讲 · Data Selection &amp; Quality</span></li>
+      <li><span>第 12 讲 · Evaluation &amp; Benchmarks</span></li>
+      <li><span>第 13 讲 · LLM-as-Judge</span></li>
+      <li><span>第 14 讲 · Agent Safety &amp; Guardrails</span></li>
+      <li><span>第 15 讲 · Coding Agents</span></li>
+    </ol>
+    <p class="counter">已整理 1 / 15 讲</p>
+
+    <div class="side-toc">
+      <h2>本讲内容</h2>
+      <ol>
+        <li><a href="#s1">1 · 这门课在教什么</a></li>
+        <li><a href="#s2">2 · Agent 一词的历史</a></li>
+        <li><a href="#s3">3 · Agent 的解剖结构</a></li>
+        <li><a href="#s4">4 · 三层视角</a></li>
+        <li><a href="#s5">5 · Workflow 与 Agent 之别</a></li>
+        <li><a href="#s6">6 · 复合 AI 系统</a></li>
+        <li><a href="#s7">7 · 五类关键挑战</a></li>
+        <li><a href="#s8">8 · 小结</a></li>
+      </ol>
+    </div>
+  </nav>
+
+  <main class="content" id="top">
+
+    <div class="eyebrow">第 1 讲 · Week 1</div>
+    <h1>Intro to Agentic Systems</h1>
+    <div class="byline">Diyi Yang · Michael Ryan · John Yang ｜ 2026 秋 ｜ 对应课件 <code>lecture01.pdf</code></div>
+
+    <p class="lede">
+      这一讲不教您怎么写出一个 agent，而是先建立坐标系：agent 这个概念从哪来、由哪些部件构成、
+      与「workflow」的边界在哪、以及为什么真正把它做可靠如此困难。后面的 14 讲，基本都在为这五组概念补充细节。
+    </p>
+
+    <div class="note">
+      <span class="label">本讲学习目标（讲师原话）</span>
+      <p>熟悉「跑在 LLM 之上的 agent 循环」、agent 的关键组件，以及 agent 训练与评测中的开放问题。</p>
+    </div>
+
+    <!-- ============ 1 ============ -->
+    <h2 id="s1"><span class="num">1</span>这门课在教什么</h2>
+    <p class="section-note">课程定位：同时补上「模型侧」与「系统侧」两种视角。</p>
+
+    <p>
+      这个领域很特殊：懂模型的人知道模型怎么训练、怎么提示、怎么对齐、怎么评测，但往往不熟悉构建可靠软件所需的工具链、API、
+      运行环境与基础设施；而懂系统的人恰好相反。<strong>CS329Z 的假设是：做 agent 需要两种能力同时在场。</strong>
+      因此课程一半讲基础原理，一半是动手构建与评测。
+    </p>
+
+    <table>
+      <thead>
+        <tr><th style="width:50%">前五周：基础组件</th><th>第五周之后：系统工程</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>LLMs for builders</td><td>Optimization 与 harness</td></tr>
+        <tr><td>Retrieval-augmented generation</td><td>面向 agent 的数据</td></tr>
+        <tr><td>Tool use 与 function calling</td><td>评测与基准设计</td></tr>
+        <tr><td>Agent 设计与脚手架</td><td>Agent 安全与护栏</td></tr>
+        <tr><td>Agent 记忆</td><td>编码 agent</td></tr>
+        <tr><td>多智能体系统</td><td>主动式 agent（proactive agents）</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      考核方式也值得先看清楚，因为它反过来提示了这门课重视什么：项目占 40%（提案、中期报告、中期演示、最终报告、最终系统演示），
+      作业 15%，作业口试 15%，论文视频 10%，同伴评审 20%。
+      其中两处特别：<strong>作业要过 15 分钟口头检查</strong>——能否讲清自己提交的每一行代码，是这门课的硬要求；
+      <strong>同伴评审按「意见是否被采纳」计分</strong>——所以反馈必须具体、可执行。
+    </p>
+
+    <div class="note">
+      <span class="label">关于用 AI 学习</span>
+      <p>课程明确鼓励用 AI 协作：解释概念、调试代码、批评设计，都算正当用法；生成代码也允许，前提是您能验证并解释它。</p>
+      <p>但课件里放了一组值得记住的数据：一项针对 52 名工程师学习新 Python 库的随机对照实验显示，借助 AI 的一组在事后测验中得分低约 17%，
+      且<em>差距在调试环节最明显</em>——而调试恰是资深工程师的核心能力。讲师给出的结论很短：请用 AI 学会「如何学习」。</p>
+    </div>
+
+    <!-- ============ 2 ============ -->
+    <h2 id="s2"><span class="num">2</span>Agent 一词的历史</h2>
+    <p class="section-note">为什么值得花 15 分钟讲历史：今天的争论，几乎都是旧争论换了词汇。</p>
+
+    <p>
+      「agent」源自拉丁语 <em>agens</em>，十五世纪末的用法是「行动者」。在 AI 语境里最早的可考用法出自
+      Hewitt、Bishop 与 Steiger 1973 年提出的 ACTOR 形式化模型——一个可独立收发消息、自行决定如何响应的计算单元。
+      1986 年，Minsky 在《心智社会》中把智能描述为大量简单主体的协作产物，而不是单一的中心处理器。
+    </p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 200" role="img" aria-label="Agent 概念发展时间轴">
+        <line x1="24" y1="104" x2="716" y2="104" stroke="#c9cfd6" stroke-width="1.5"/>
+        <g stroke="#b6bcc4" fill="none" stroke-width="1">
+          <path d="M24 166 v6 h216 v-6"/>
+          <path d="M244 166 v6 h216 v-6"/>
+          <path d="M464 166 v6 h252 v-6"/>
+        </g>
+        <g font-size="11" fill="#8b949e" text-anchor="middle">
+          <text x="132" y="186">概念与定义（1973–1995）</text>
+          <text x="352" y="186">循环范式（1998–2015）</text>
+          <text x="590" y="186">LLM 时代（2022– ）</text>
+        </g>
+        <g fill="#8b949e">
+          <circle cx="60" cy="104" r="3.5"/><circle cx="130" cy="104" r="3.5"/>
+          <circle cx="210" cy="104" r="3.5"/><circle cx="300" cy="104" r="3.5"/>
+          <circle cx="420" cy="104" r="3.5"/>
+        </g>
+        <g fill="#31496b">
+          <circle cx="540" cy="104" r="4"/><circle cx="605" cy="104" r="4"/><circle cx="678" cy="104" r="4"/>
+        </g>
+        <g text-anchor="middle">
+          <text x="60" y="66" font-size="12" font-weight="600" fill="#1f2328">1973</text>
+          <text x="60" y="82" font-size="11" fill="#5c6570">ACTOR 形式化</text>
+          <text x="210" y="66" font-size="12" font-weight="600" fill="#1f2328">1995</text>
+          <text x="210" y="82" font-size="11" fill="#5c6570">四要素定义 · 感知—执行</text>
+          <text x="420" y="66" font-size="12" font-weight="600" fill="#1f2328">2015</text>
+          <text x="420" y="82" font-size="11" fill="#5c6570">DQN · Atari</text>
+          <text x="605" y="66" font-size="12" font-weight="600" fill="#31496b">2022.11</text>
+          <text x="605" y="82" font-size="11" fill="#5c6570">ChatGPT</text>
+        </g>
+        <g text-anchor="middle">
+          <text x="130" y="126" font-size="12" font-weight="600" fill="#1f2328">1986</text>
+          <text x="130" y="142" font-size="11" fill="#5c6570">心智社会</text>
+          <text x="300" y="126" font-size="12" font-weight="600" fill="#1f2328">1998</text>
+          <text x="300" y="142" font-size="11" fill="#5c6570">agent–环境循环</text>
+          <text x="540" y="126" font-size="12" font-weight="600" fill="#31496b">2022.10</text>
+          <text x="540" y="142" font-size="11" fill="#5c6570">ReAct</text>
+          <text x="716" y="126" font-size="12" font-weight="600" fill="#31496b" text-anchor="end">2023.03</text>
+          <text x="716" y="142" font-size="10.5" fill="#5c6570" text-anchor="end">GPT-4 · BabyAGI · AutoGPT</text>
+        </g>
+      </svg>
+      <figcaption>
+        Agent 概念的三段路：先有「什么是自主的计算主体」之争，再由强化学习定下「感知—行动—反馈」的循环，LLM 只是给这副旧骨架换了一颗新的心脏。
+      </figcaption>
+    </figure>
+
+    <p>
+      1990 年代的两个定义今天依然适用：Wooldridge 与 Jennings 的四要素——<strong>自主性、社会能力、反应性、主动性</strong>；
+      以及 Russell 与 Norvig 更工程化的说法——「通过传感器感知环境、通过执行器作用于环境的东西」。
+      强化学习时代留下的遗产是「循环」本身：agent 不是一次函数调用，而是一个持续与环境交互的过程，
+      2015 年 DQN 在 Atari 上的成功只是把这一范式推到公众视野。
+    </p>
+    <p>
+      真正的转折发生在 2022 年下半年：GPT-3 的上下文学习让「用自然语言描述任务」成为可能，MRKL 首次把 LLM 当作调度器去路由到外部模块；
+      十月的 ReAct 把推理与行动交错起来，十一月底 ChatGPT 发布，次年三月 GPT-4、BabyAGI 与 AutoGPT 密集到来——
+      AutoGPT 第一次让「给一个目标，让 agent 自己拆解并执行」成为大众想象。
+      课件随后给出两张曲线，指向同一件事：模型能力在持续上升，<em>agentic 能力</em>（把模型用在长任务里的实际成功率）也在上升，
+      但后者对前者的跟随并不线性。这个落差正是第 7 节要谈的东西。
+    </p>
+
+    <!-- ============ 3 ============ -->
+    <h2 id="s3"><span class="num">3</span>Agent 的解剖结构</h2>
+    <p class="section-note">本讲的主干：五个部件 + 一个循环。</p>
+
+    <p>
+      课件用 ReAct 的图式给出最小骨架：模型先「思考」（Think，即生成推理痕迹），再「行动」（Act），
+      行动作用于环境并返回「观察」（Observation），然后带着迄今为止的所有痕迹继续思考。把这一循环展开，就是下图：
+    </p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 310" role="img" aria-label="Agent 解剖结构图">
+        <rect x="16" y="40" width="436" height="240" rx="10" fill="none" stroke="#b6bcc4" stroke-dasharray="5 4"/>
+        <text x="30" y="62" font-size="12" fill="#8b949e" letter-spacing="1">AGENT</text>
+
+        <rect x="150" y="70" width="210" height="46" rx="8" fill="#fff" stroke="#e2e5e9"/>
+        <text x="255" y="90" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">规划与推理</text>
+        <text x="255" y="106" font-size="10.5" fill="#5c6570" text-anchor="middle">拆解任务 · 比较方案 · 判断何时停止</text>
+
+        <rect x="180" y="148" width="150" height="54" rx="8" fill="#eef1f5" stroke="#31496b" stroke-width="1.5"/>
+        <text x="255" y="180" font-size="13.5" font-weight="650" fill="#31496b" text-anchor="middle">LLM Core</text>
+
+        <rect x="44" y="226" width="180" height="46" rx="8" fill="#fff" stroke="#e2e5e9"/>
+        <text x="134" y="246" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">记忆</text>
+        <text x="134" y="262" font-size="10.5" fill="#5c6570" text-anchor="middle">事件 · 知识 · 技能</text>
+
+        <rect x="272" y="226" width="180" height="46" rx="8" fill="#fff" stroke="#e2e5e9"/>
+        <text x="362" y="246" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">工具</text>
+        <text x="362" y="262" font-size="10.5" fill="#5c6570" text-anchor="middle">检索 · 代码 · 搜索 · 文件</text>
+
+        <g stroke="#c9cfd6" stroke-width="1">
+          <line x1="255" y1="116" x2="255" y2="146"/>
+          <line x1="150" y1="226" x2="212" y2="203"/>
+          <line x1="330" y1="226" x2="298" y2="203"/>
+        </g>
+
+        <rect x="556" y="86" width="176" height="150" rx="10" fill="#fafbfc" stroke="#e2e5e9"/>
+        <text x="644" y="114" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">环境（外部世界）</text>
+        <text x="644" y="140" font-size="11" fill="#5c6570" text-anchor="middle">桌面系统 · 浏览器</text>
+        <text x="644" y="158" font-size="11" fill="#5c6570" text-anchor="middle">移动应用 · 游戏</text>
+        <text x="644" y="176" font-size="11" fill="#5c6570" text-anchor="middle">数据库 · 命令行</text>
+
+        <line x1="556" y1="130" x2="460" y2="130" stroke="#8b949e" stroke-width="1.5" marker-end="url(#mMu)"/>
+        <text x="508" y="118" font-size="11" fill="#5c6570" text-anchor="middle">观察</text>
+        <line x1="460" y1="200" x2="554" y2="200" stroke="#31496b" stroke-width="1.5" marker-end="url(#mAc)"/>
+        <text x="507" y="188" font-size="11" fill="#31496b" text-anchor="middle">行动</text>
+      </svg>
+      <figcaption>
+        五个部件围绕一个循环组织：环境被「观察」进来，动作「行动」出去——工具调用、环境交互、给用户的回复都是行动，只是落在不同的层。
+        LLM Core 是唯一的推理引擎，其余部件都是它的输入与输出通道。
+      </figcaption>
+    </figure>
+
+    <h3>3.1 规划与推理：为什么让它「想」比直接「做」好</h3>
+    <p>
+      对人类而言，推理是演绎、类比、规划这类心理过程；对 LLM 而言，是模仿其中一部分过程的中间生成；
+      对 agent 而言，则是<strong>更新自身内部状态的内部动作</strong>——它不改变外部世界，只是让下一步动作更可能正确。
+    </p>
+    <p>
+      课件给了一个厨房的例子。您在做菜，发现盐用完了。如果只会反应：手停在那里，任务失败。
+      如果会推理：<em>「这道菜需要咸味，既然没有盐，就找酱油代替，酱油在右手边的柜子里。」</em>
+      于是动作变成「向右转」→ 看见柜子和桌子 → 「打开柜子」。推理在这里做了两件事：
+      <strong>泛化</strong>——「缺盐→找咸味替代品」这条链换个厨房照样成立；
+      以及<strong>把观察映射到动作</strong>——看到一堆物体，要决定哪个动作才推进目标，这一步很难，课件直接把它标注为对齐问题。
+    </p>
+
+    <h4>只有推理，与推理加行动</h4>
+    <p>
+      课件用同一个问题对照了两种模式：「除了 Apple Remote，还有什么设备能控制它最初被设计来配合的那个程序？」
+      仅推理的模型一路想到「Apple Remote 最初为 Apple TV 设计，Apple TV 可由 iPhone、iPad、iPod Touch 控制」，
+      然后给出这三个答案——<strong>听起来合理，但答错了</strong>，它漏掉了检索事实之外的另一种可能（键盘功能键），
+      而这种错误极难自查，因为推理链条本身读起来是通顺的。
+      ReAct 的做法则是想一步、搜一次、看结果、再想：第一搜确认 Apple Remote 为 Front Row 而非 Apple TV 设计；
+      第二搜「Front Row」落空，于是把查询改成「Front Row (software)」；第三搜拿到事实——
+      Front Row 可由 Apple Remote 或<strong>键盘功能键</strong>控制。结论正确，且每一步都有外部证据支撑。
+    </p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 258" role="img" aria-label="CoT 与 ReAct 对照">
+        <text x="24" y="34" font-size="12.5" font-weight="650" fill="#1f2328">仅推理（CoT）—— 一路想到底</text>
+        <g>
+          <rect x="20" y="46" width="76" height="38" rx="6" fill="#fff" stroke="#c9cfd6"/>
+          <text x="58" y="70" font-size="12" fill="#1f2328" text-anchor="middle">问题</text>
+          <rect x="124" y="46" width="76" height="38" rx="6" fill="#f3f4f6" stroke="#e2e5e9"/>
+          <text x="162" y="70" font-size="12" fill="#5c6570" text-anchor="middle">思考</text>
+          <rect x="228" y="46" width="76" height="38" rx="6" fill="#f3f4f6" stroke="#e2e5e9"/>
+          <text x="266" y="70" font-size="12" fill="#5c6570" text-anchor="middle">思考</text>
+          <rect x="580" y="46" width="140" height="38" rx="6" fill="#faf3f3" stroke="#a05252"/>
+          <text x="650" y="62" font-size="12" font-weight="600" fill="#a05252" text-anchor="middle">答案 ✗</text>
+          <text x="650" y="78" font-size="10" fill="#a05252" text-anchor="middle">自信，但可能是编造</text>
+        </g>
+        <g stroke="#b6bcc4" stroke-width="1.2">
+          <line x1="96" y1="65" x2="122" y2="65" marker-end="url(#mMu)"/>
+          <line x1="200" y1="65" x2="226" y2="65" marker-end="url(#mMu)"/>
+        </g>
+        <line x1="304" y1="65" x2="578" y2="65" stroke="#b6bcc4" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#mMu)"/>
+        <text x="441" y="56" font-size="10.5" fill="#8b949e" text-anchor="middle">信息缺口靠「内部生成」填补</text>
+
+        <text x="24" y="134" font-size="12.5" font-weight="650" fill="#1f2328">推理＋行动（ReAct）—— 想一步、做一步、看一步</text>
+        <g>
+          <rect x="20" y="146" width="76" height="38" rx="6" fill="#fff" stroke="#c9cfd6"/>
+          <text x="58" y="170" font-size="12" fill="#1f2328" text-anchor="middle">问题</text>
+          <rect x="124" y="146" width="76" height="38" rx="6" fill="#f3f4f6" stroke="#e2e5e9"/>
+          <text x="162" y="170" font-size="12" fill="#5c6570" text-anchor="middle">思考</text>
+          <rect x="228" y="146" width="76" height="38" rx="6" fill="#eef1f5" stroke="#31496b"/>
+          <text x="266" y="164" font-size="12" font-weight="600" fill="#31496b" text-anchor="middle">行动</text>
+          <text x="266" y="178" font-size="10" fill="#31496b" text-anchor="middle">搜索</text>
+          <rect x="332" y="146" width="76" height="38" rx="6" fill="#fff" stroke="#b6bcc4" stroke-dasharray="3 3"/>
+          <text x="370" y="164" font-size="12" fill="#5c6570" text-anchor="middle">观察</text>
+          <text x="370" y="178" font-size="10" fill="#8b949e" text-anchor="middle">外部事实</text>
+          <rect x="436" y="146" width="100" height="38" rx="6" fill="#f3f4f6" stroke="#e2e5e9"/>
+          <text x="486" y="164" font-size="12" fill="#5c6570" text-anchor="middle">思考</text>
+          <text x="486" y="178" font-size="10" fill="#8b949e" text-anchor="middle">修正查询再来</text>
+          <rect x="580" y="146" width="140" height="38" rx="6" fill="#f2f6f2" stroke="#4a7c59"/>
+          <text x="650" y="162" font-size="12" font-weight="600" fill="#4a7c59" text-anchor="middle">答案 ✓</text>
+          <text x="650" y="178" font-size="10" fill="#4a7c59" text-anchor="middle">每步有外部证据</text>
+        </g>
+        <g stroke="#b6bcc4" stroke-width="1.2">
+          <line x1="96" y1="165" x2="122" y2="165" marker-end="url(#mMu)"/>
+          <line x1="200" y1="165" x2="226" y2="165" marker-end="url(#mMu)"/>
+          <line x1="304" y1="165" x2="330" y2="165" marker-end="url(#mMu)"/>
+          <line x1="408" y1="165" x2="434" y2="165" marker-end="url(#mMu)"/>
+          <line x1="536" y1="165" x2="578" y2="165" marker-end="url(#mMu)"/>
+        </g>
+        <path d="M370,188 C340,216 296,216 266,188" fill="none" stroke="#8b949e" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#mMu)"/>
+        <text x="318" y="224" font-size="10.5" fill="#8b949e" text-anchor="middle">多轮循环</text>
+
+        <g font-size="11" fill="#5c6570">
+          <rect x="24" y="238" width="12" height="12" fill="#f3f4f6" stroke="#e2e5e9"/>
+          <text x="44" y="248">思考：内部生成，不改变世界</text>
+          <rect x="240" y="238" width="12" height="12" fill="#eef1f5" stroke="#31496b"/>
+          <text x="260" y="248">行动：作用于环境</text>
+          <rect x="400" y="238" width="12" height="12" fill="#fff" stroke="#b6bcc4" stroke-dasharray="3 3"/>
+          <text x="420" y="248">观察：外部证据</text>
+        </g>
+      </svg>
+      <figcaption>
+        CoT 用「内部生成」填补信息缺口，ReAct 用「外部观察」填补信息缺口。前者成本低但会自信地编造；后者引入延迟与工具成本，换来可核验性。
+        课件结论：ReAct 稳定优于纯行动；而幻觉是 CoT 的严重问题，交错行动能显著缓解它。
+      </figcaption>
+    </figure>
+
+    <h4>围绕推理的几种增强</h4>
+    <p>后面几讲会反复遇到这条谱系——它们的共同点是都用「更多计算」换「更稳的推理」，差别只在于把冗余花在哪里：</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 112" role="img" aria-label="推理增强技术谱系">
+        <g>
+          <rect x="20" y="24" width="128" height="56" rx="8" fill="#fff" stroke="#c9cfd6"/>
+          <text x="84" y="46" font-size="12.5" font-weight="600" fill="#1f2328" text-anchor="middle">基线</text>
+          <text x="84" y="64" font-size="10.5" fill="#5c6570" text-anchor="middle">单条推理路径</text>
+          <rect x="164" y="24" width="128" height="56" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="228" y="46" font-size="12.5" font-weight="600" fill="#1f2328" text-anchor="middle">自洽性</text>
+          <text x="228" y="64" font-size="10.5" fill="#5c6570" text-anchor="middle">多条路径投票</text>
+          <rect x="308" y="24" width="128" height="56" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="372" y="46" font-size="12.5" font-weight="600" fill="#1f2328" text-anchor="middle">反思</text>
+          <text x="372" y="64" font-size="10.5" fill="#5c6570" text-anchor="middle">把失败写成经验</text>
+          <rect x="452" y="24" width="128" height="56" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="516" y="46" font-size="12.5" font-weight="600" fill="#1f2328" text-anchor="middle">辩论</text>
+          <text x="516" y="64" font-size="10.5" fill="#5c6570" text-anchor="middle">多实例互相质疑</text>
+          <rect x="596" y="24" width="128" height="56" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="660" y="46" font-size="12.5" font-weight="600" fill="#1f2328" text-anchor="middle">编排</text>
+          <text x="660" y="64" font-size="10.5" fill="#5c6570" text-anchor="middle">专职 agent 分工</text>
+        </g>
+        <g stroke="#b6bcc4" stroke-width="1.2">
+          <line x1="148" y1="52" x2="162" y2="52" marker-end="url(#mMu)"/>
+          <line x1="292" y1="52" x2="306" y2="52" marker-end="url(#mMu)"/>
+          <line x1="436" y1="52" x2="450" y2="52" marker-end="url(#mMu)"/>
+          <line x1="580" y1="52" x2="594" y2="52" marker-end="url(#mMu)"/>
+        </g>
+      </svg>
+      <figcaption>
+        自洽性（Self-Consistency）采样多条推理路径、取最一致的答案；反思（Reflexion）让 agent 用自然语言复盘失败轨迹，
+        把冗长的错误过程蒸馏成简短的经验提示写回记忆；辩论让多个实例互相质疑以推动收敛；
+        编排者模式（如 Magentic-One）由一个 orchestrator 把子任务分给专职 agent。共同的代价：推理成本成倍增长。
+      </figcaption>
+    </figure>
+
+    <h3>3.2 记忆：上下文装不下的那部分</h3>
+    <p>
+      动机很直接：上下文窗口不可能容纳完整的交互事件流；即便勉强装下，模型也很难从中注意到真正相关的那几条，
+      更别说在长历史里做归纳。记忆因此不是「更大的上下文」，而是一套<strong>有选择的读写机制</strong>。
+      课件借人类长时记忆的分类，按内容把记忆分成三层：
+    </p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 330" role="img" aria-label="三种记忆的流水线">
+        <g>
+          <rect x="90" y="20" width="310" height="70" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="106" y="44" font-size="13" font-weight="600" fill="#1f2328">情景记忆 Episodic —— 存经历</text>
+          <text x="106" y="64" font-size="11" fill="#5c6570">写：只追加事件流</text>
+          <text x="106" y="80" font-size="11" fill="#5c6570">读：按启发式打分检索</text>
+        </g>
+        <g>
+          <rect x="90" y="125" width="310" height="70" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="106" y="149" font-size="13" font-weight="600" fill="#1f2328">语义记忆 Semantic —— 存知识</text>
+          <text x="106" y="169" font-size="11" fill="#5c6570">写：由 LLM 对事件推理提炼</text>
+          <text x="106" y="185" font-size="11" fill="#5c6570">读：检索</text>
+        </g>
+        <g>
+          <rect x="90" y="230" width="310" height="70" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="106" y="254" font-size="13" font-weight="600" fill="#1f2328">程序记忆 Procedural —— 存技能</text>
+          <text x="106" y="274" font-size="11" fill="#5c6570">写：沉淀为代码技能库</text>
+          <text x="106" y="290" font-size="11" fill="#5c6570">读：向量检索后直接调用</text>
+        </g>
+
+        <line x1="245" y1="90" x2="245" y2="123" stroke="#31496b" stroke-width="1.5" marker-end="url(#mAc)"/>
+        <text x="257" y="111" font-size="11" fill="#31496b">提炼</text>
+        <line x1="245" y1="195" x2="245" y2="228" stroke="#31496b" stroke-width="1.5" marker-end="url(#mAc)"/>
+        <text x="257" y="216" font-size="11" fill="#31496b">固化</text>
+
+        <rect x="500" y="20" width="210" height="280" rx="10" fill="#fafbfc" stroke="#b6bcc4" stroke-dasharray="5 4"/>
+        <text x="605" y="46" font-size="12.5" font-weight="650" fill="#1f2328" text-anchor="middle">上下文窗口（有限）</text>
+        <text x="605" y="72" font-size="11" fill="#5c6570" text-anchor="middle">完整事件流装不下；</text>
+        <text x="605" y="90" font-size="11" fill="#5c6570" text-anchor="middle">即便勉强装下，也难以</text>
+        <text x="605" y="108" font-size="11" fill="#5c6570" text-anchor="middle">注意到相关的部分、</text>
+        <text x="605" y="126" font-size="11" fill="#5c6570" text-anchor="middle">做出归纳。</text>
+
+        <g stroke="#8b949e" stroke-width="1.2">
+          <line x1="400" y1="55" x2="496" y2="55" marker-end="url(#mMu)"/>
+          <line x1="400" y1="160" x2="496" y2="160" marker-end="url(#mMu)"/>
+          <line x1="400" y1="265" x2="496" y2="265" marker-end="url(#mMu)"/>
+        </g>
+        <g font-size="10.5" fill="#8b949e" text-anchor="middle">
+          <text x="448" y="46">读</text>
+          <text x="448" y="151">读</text>
+          <text x="448" y="256">读</text>
+        </g>
+      </svg>
+      <figcaption>
+        越往下，写入成本越高、读取越精准：情景记忆写入便宜、读取粗糙；语义记忆写入要多付一次推理、读取更准；
+        程序记忆把技能固化为可执行代码，读一次就能用——最接近「学会了」。
+      </figcaption>
+    </figure>
+
+    <h3>3.3 工具与环境</h3>
+    <p>
+      Toolformer 的思路是让模型自己学会决定<em>调用哪个 API、何时调用、传什么参数、以及如何把结果融回上下文</em>；
+      Gorilla 则把规模推到数千个真实 API，重点变成「在庞大的接口集合中选对那一个」。
+      两者共同说明：工具能力的瓶颈往往不在「会不会调用」，而在「选得准不准、参数对不对」。
+      而环境是动作落地的地方——桌面系统、浏览器、移动应用、游戏、数据库都是不同形态的环境，
+      环境的选择直接决定了 agent 的可观测范围、可执行动作集合，以及失败是否可恢复。
+    </p>
+
+    <!-- ============ 4 ============ -->
+    <h2 id="s4"><span class="num">4</span>三层视角</h2>
+    <p class="section-note">课件给的一句总结，可作为整个学期的心智模型。</p>
+    <p>尽管部件很多，agent 工程可以切成三层：</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 100" role="img" aria-label="系统、数据、评测三层">
+        <g>
+          <rect x="40" y="24" width="200" height="50" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="140" y="45" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">系统层</text>
+          <text x="140" y="62" font-size="10.5" fill="#5c6570" text-anchor="middle">架构 · 部件 · 循环</text>
+          <rect x="270" y="24" width="200" height="50" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="370" y="45" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">数据层</text>
+          <text x="370" y="62" font-size="10.5" fill="#5c6570" text-anchor="middle">样本 · 演示 · 上下文</text>
+          <rect x="500" y="24" width="200" height="50" rx="8" fill="#fff" stroke="#e2e5e9"/>
+          <text x="600" y="45" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">评测层</text>
+          <text x="600" y="62" font-size="10.5" fill="#5c6570" text-anchor="middle">指标 · 基准 · 通过标准</text>
+        </g>
+        <g stroke="#8b949e" stroke-width="1.2">
+          <line x1="240" y1="49" x2="270" y2="49" marker-start="url(#mMu)" marker-end="url(#mMu)"/>
+          <line x1="470" y1="49" x2="500" y2="49" marker-start="url(#mMu)" marker-end="url(#mMu)"/>
+        </g>
+      </svg>
+      <figcaption>
+        三层互相牵制：改架构会改变需要的数据，换数据会改变评测的含义，改指标又会反过来诱导架构的选择。
+        这也是评测被排在课程较后周次的原因——在您理解系统与数据之前，讨论指标是没有着力点的。
+      </figcaption>
+    </figure>
+
+    <!-- ============ 5 ============ -->
+    <h2 id="s5"><span class="num">5</span>Workflow 与 Agent 之别</h2>
+    <p class="section-note">同一句话的两半：都是复合 AI 系统，区别只在于「谁决定步骤」。</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 226" role="img" aria-label="Workflow 与 Agent 对比">
+        <text x="24" y="32" font-size="12.5" font-weight="650" fill="#1f2328">Workflow —— 代码决定步骤</text>
+        <g>
+          <rect x="20" y="48" width="56" height="38" rx="6" fill="#eef1f5" stroke="#31496b"/>
+          <text x="48" y="72" font-size="12" font-weight="600" fill="#31496b" text-anchor="middle">代码</text>
+          <rect x="86" y="48" width="56" height="38" rx="6" fill="#fff" stroke="#c9cfd6"/>
+          <text x="114" y="72" font-size="12" fill="#1f2328" text-anchor="middle">LLM</text>
+          <rect x="152" y="48" width="56" height="38" rx="6" fill="#eef1f5" stroke="#31496b"/>
+          <text x="180" y="72" font-size="12" font-weight="600" fill="#31496b" text-anchor="middle">代码</text>
+          <rect x="218" y="48" width="56" height="38" rx="6" fill="#fff" stroke="#c9cfd6"/>
+          <text x="246" y="72" font-size="12" fill="#1f2328" text-anchor="middle">LLM</text>
+          <rect x="284" y="48" width="56" height="38" rx="6" fill="#f2f6f2" stroke="#4a7c59"/>
+          <text x="312" y="72" font-size="12" font-weight="600" fill="#4a7c59" text-anchor="middle">输出</text>
+        </g>
+        <g stroke="#b6bcc4" stroke-width="1.2">
+          <line x1="76" y1="67" x2="84" y2="67"/><line x1="142" y1="67" x2="150" y2="67"/>
+          <line x1="208" y1="67" x2="216" y2="67"/><line x1="274" y1="67" x2="282" y2="67"/>
+        </g>
+        <text x="24" y="124" font-size="11" fill="#5c6570">流程写死，LLM 只在指定环节出力</text>
+        <text x="24" y="142" font-size="11" fill="#5c6570">可预测、可调试；遇到流程外的情况就无能为力</text>
+
+        <line x1="372" y1="20" x2="372" y2="206" stroke="#eef0f2" stroke-width="1.5"/>
+
+        <text x="396" y="32" font-size="12.5" font-weight="650" fill="#1f2328">Agent —— LLM 决定步骤</text>
+        <rect x="520" y="78" width="100" height="44" rx="8" fill="#eef1f5" stroke="#31496b" stroke-width="1.5"/>
+        <text x="570" y="105" font-size="13" font-weight="650" fill="#31496b" text-anchor="middle">LLM</text>
+        <rect x="400" y="56" width="76" height="36" rx="6" fill="#fff" stroke="#e2e5e9"/>
+        <text x="438" y="79" font-size="12" fill="#1f2328" text-anchor="middle">工具 A</text>
+        <rect x="400" y="128" width="76" height="36" rx="6" fill="#fff" stroke="#e2e5e9"/>
+        <text x="438" y="151" font-size="12" fill="#1f2328" text-anchor="middle">工具 B</text>
+        <rect x="650" y="94" width="70" height="36" rx="6" fill="#fafbfc" stroke="#e2e5e9"/>
+        <text x="685" y="117" font-size="12" fill="#1f2328" text-anchor="middle">环境</text>
+        <g stroke="#8b949e" stroke-width="1.2">
+          <line x1="476" y1="74" x2="518" y2="90" marker-start="url(#mMu)" marker-end="url(#mMu)"/>
+          <line x1="476" y1="146" x2="518" y2="118" marker-start="url(#mMu)" marker-end="url(#mMu)"/>
+          <line x1="620" y1="100" x2="648" y2="104" marker-start="url(#mMu)" marker-end="url(#mMu)"/>
+        </g>
+        <text x="396" y="196" font-size="11" fill="#5c6570">每一步做什么、何时停，由模型运行时判断</text>
+        <text x="396" y="214" font-size="11" fill="#5c6570">灵活开放；但不可预测，错误会累积</text>
+      </svg>
+      <figcaption>
+        左边是「控制流在外」：代码是骨架，LLM 只是填充。右边是「控制流在内」：代码只提供动作与观察的接口，顺序交给模型。
+        AlphaCode 2 是很能说明问题的例子——它用微调模型采样并给程序打分、配一个执行模块，对一道题最多生成一百万个候选解再筛选，
+        系统极其复杂，但步骤写死，所以它是 workflow 而非 agent。「复杂」与「自主」是两件不同的事。
+      </figcaption>
+    </figure>
+
+    <!-- ============ 6 ============ -->
+    <h2 id="s6"><span class="num">6</span>复合 AI 系统</h2>
+    <p class="section-note">从「一个大模型」到「一组协作的部件」——这是本课程标题里 compound 的含义。</p>
+
+    <h3>6.1 RAG：把外部知识接进来</h3>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 200" role="img" aria-label="RAG 三步流程">
+        <g>
+          <rect x="20" y="40" width="112" height="48" rx="8" fill="#fff" stroke="#c9cfd6"/>
+          <text x="76" y="60" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">用户问题</text>
+          <text x="76" y="78" font-size="10" fill="#8b949e" text-anchor="middle">「……？」</text>
+          <rect x="160" y="40" width="112" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="216" y="60" font-size="13" font-weight="600" fill="#31496b" text-anchor="middle">① 检索</text>
+          <text x="216" y="78" font-size="10" fill="#8b949e" text-anchor="middle">Retrieve</text>
+          <rect x="310" y="40" width="112" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="366" y="60" font-size="13" font-weight="600" fill="#31496b" text-anchor="middle">② 拼接</text>
+          <text x="366" y="78" font-size="10" fill="#8b949e" text-anchor="middle">Augment</text>
+          <rect x="460" y="40" width="112" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="516" y="60" font-size="13" font-weight="600" fill="#31496b" text-anchor="middle">③ 生成</text>
+          <text x="516" y="78" font-size="10" fill="#8b949e" text-anchor="middle">Generate</text>
+          <rect x="610" y="40" width="110" height="48" rx="8" fill="#f2f6f2" stroke="#4a7c59"/>
+          <text x="665" y="60" font-size="13" font-weight="600" fill="#4a7c59" text-anchor="middle">答案</text>
+          <text x="665" y="78" font-size="10" fill="#4a7c59" text-anchor="middle">有据可查</text>
+        </g>
+        <g stroke="#b6bcc4" stroke-width="1.2">
+          <line x1="132" y1="64" x2="158" y2="64" marker-end="url(#mMu)"/>
+          <line x1="272" y1="64" x2="308" y2="64" marker-end="url(#mMu)"/>
+          <line x1="422" y1="64" x2="458" y2="64" marker-end="url(#mMu)"/>
+          <line x1="572" y1="64" x2="608" y2="64" marker-end="url(#mMu)"/>
+        </g>
+        <rect x="160" y="130" width="112" height="36" rx="8" fill="#fafbfc" stroke="#b6bcc4" stroke-dasharray="4 3"/>
+        <text x="216" y="153" font-size="11.5" fill="#5c6570" text-anchor="middle">文档库（可更新）</text>
+        <line x1="216" y1="130" x2="216" y2="92" stroke="#8b949e" stroke-width="1.2" marker-end="url(#mMu)"/>
+        <text x="366" y="153" font-size="11" fill="#8b949e" text-anchor="middle">检索结果与问题进入同一上下文</text>
+        <text x="516" y="176" font-size="11" fill="#8b949e" text-anchor="middle">只在给定证据上作答</text>
+      </svg>
+      <figcaption>
+        RAG 的价值不在于「让模型知道更多」，而在于把知识从权重里搬到可更新的外部存储里：文档改了，答案就跟着改，无需重新训练。
+        代价是引入了检索环节——检索没召回的东西，模型依然会在没有证据时编造。
+      </figcaption>
+    </figure>
+
+    <h3>6.2 工具调用的一次完整生命周期</h3>
+    <p>
+      一次工具调用看似一瞬间，实际有四个必须各自成立的环节。课件用一句话串起全过程：问题「<code>test.py</code> 里有什么？」→
+      从上下文的工具中选中 <code>read_file</code> → 填参 <code>{"path": "test.py"}</code> → 校验 <code>path</code> 是字符串 →
+      沙箱执行 → 文件内容回到上下文，供下一轮思考使用。
+    </p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 130" role="img" aria-label="工具调用的四个环节">
+        <g>
+          <rect x="20" y="28" width="124" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="82" y="48" font-size="12.5" font-weight="600" fill="#31496b" text-anchor="middle">选择</text>
+          <text x="82" y="66" font-size="10" fill="#5c6570" text-anchor="middle">从 schema 里挑工具</text>
+          <rect x="166" y="28" width="124" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="228" y="48" font-size="12.5" font-weight="600" fill="#31496b" text-anchor="middle">填参</text>
+          <text x="228" y="66" font-size="10" fill="#5c6570" text-anchor="middle">按任务填字段</text>
+          <rect x="312" y="28" width="124" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="374" y="48" font-size="12.5" font-weight="600" fill="#31496b" text-anchor="middle">校验</text>
+          <text x="374" y="66" font-size="10" fill="#5c6570" text-anchor="middle">格式与类型检查</text>
+          <rect x="458" y="28" width="124" height="48" rx="8" fill="#fff" stroke="#31496b"/>
+          <text x="520" y="48" font-size="12.5" font-weight="600" fill="#31496b" text-anchor="middle">执行</text>
+          <text x="520" y="66" font-size="10" fill="#5c6570" text-anchor="middle">沙箱中运行</text>
+          <rect x="604" y="28" width="124" height="48" rx="8" fill="#eef1f5" stroke="#31496b"/>
+          <text x="666" y="48" font-size="12.5" font-weight="600" fill="#31496b" text-anchor="middle">回填</text>
+          <text x="666" y="66" font-size="10" fill="#31496b" text-anchor="middle">结果进入上下文</text>
+        </g>
+        <g stroke="#b6bcc4" stroke-width="1.2">
+          <line x1="144" y1="52" x2="164" y2="52" marker-end="url(#mMu)"/>
+          <line x1="290" y1="52" x2="310" y2="52" marker-end="url(#mMu)"/>
+          <line x1="436" y1="52" x2="456" y2="52" marker-end="url(#mMu)"/>
+          <line x1="582" y1="52" x2="602" y2="52" marker-end="url(#mMu)"/>
+        </g>
+        <g font-size="10.5" fill="#a05252" text-anchor="middle">
+          <text x="82" y="106">✗ 选错工具</text>
+          <text x="228" y="106">✗ 参数填错</text>
+          <text x="374" y="106">✗ 格式不符</text>
+          <text x="520" y="106">✗ 环境报错</text>
+          <text x="666" y="106" fill="#5c6570">→ 供下一轮思考</text>
+        </g>
+      </svg>
+      <figcaption>四个环节任一失败，整次调用就失败——原因可能在选择、在参数、在格式、也在执行环境。这正是「错误会累积」的具体来源。</figcaption>
+    </figure>
+
+    <h3>6.3 MCP：把工具接口标准化</h3>
+    <p>
+      模型上下文协议做的事，与当年 USB 对硬件做的事类似：让工具供应商按统一约定暴露能力，
+      让不同的 agent 宿主都能接入同一批工具，而不必为每个工具写一次适配。
+      它解决的是工程上的重复劳动问题，而不是模型能力问题——分清这一点，才不会高估它。
+    </p>
+
+    <!-- ============ 7 ============ -->
+    <h2 id="s7"><span class="num">7</span>五类关键挑战</h2>
+    <p class="section-note">本讲最后 15 分钟，也是后面所有技术内容的动机所在。</p>
+
+    <table>
+      <thead>
+        <tr><th style="width:22%">挑战</th><th>问题的实质</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>可靠性</td><td>多步设置下误差会复合：每步 95% 正确，二十步之后只剩三成多。</td></tr>
+        <tr><td>训练</td><td>奖励稀疏、轨迹很长、rollout 昂贵——强化学习在这里不好用。</td></tr>
+        <tr><td>长时程</td><td>上下文随轮次增长并逐渐漂移，早期信息被稀释。</td></tr>
+        <tr><td>安全</td><td>任务成功不等于行为安全；两者可以同时成立，也可以背道而驰。</td></tr>
+        <tr><td>评测</td><td>评什么、怎么评，本身没有共识；基准容易失真。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.1 可靠性：三个可测量的维度</h3>
+    <p>
+      可靠性不是一句口号，课件把它拆成三个可以测的东西：<strong>一致性</strong>——同一任务给两次，结果是否相同；
+      <strong>对扰动的稳健性</strong>——提示、工具、环境发生微小而现实的变动时，表现是否崩塌；
+      <strong>可预测的失败模式</strong>——失败时是否以可读、可恢复的方式失败，而不是出其不意。
+      把这三个维度并到一起，就能看到本讲反复暗示的那个落差：
+    </p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 740 270" role="img" aria-label="能力与可靠性的落差">
+        <line x1="60" y1="225" x2="715" y2="225" stroke="#c9cfd6" stroke-width="1.5"/>
+        <line x1="60" y1="30" x2="60" y2="225" stroke="#c9cfd6" stroke-width="1.5"/>
+        <text x="52" y="44" font-size="11" fill="#8b949e" text-anchor="end">任务得分</text>
+        <text x="388" y="250" font-size="11" fill="#8b949e" text-anchor="middle">模型代际 →</text>
+
+        <path d="M80,184 C250,176 450,152 690,112 L690,146 C450,178 250,200 80,208 Z" fill="#8b949e" opacity="0.13"/>
+        <path d="M80,196 C250,188 450,165 690,128" fill="none" stroke="#5c6570" stroke-width="2"/>
+        <text x="688" y="148" font-size="11" fill="#5c6570" text-anchor="end">重复运行的实际表现（含波动）</text>
+
+        <path d="M80,190 C250,170 450,120 690,62" fill="none" stroke="#31496b" stroke-width="2.5"/>
+        <text x="688" y="54" font-size="11" font-weight="600" fill="#31496b" text-anchor="end">基准成绩</text>
+
+        <line x1="640" y1="74" x2="640" y2="120" stroke="#a05252" stroke-width="1.5" marker-start="url(#mRd)" marker-end="url(#mRd)"/>
+        <text x="628" y="102" font-size="11" font-weight="600" fill="#a05252" text-anchor="end">落差</text>
+      </svg>
+      <figcaption>
+        概念图，非真实数据：基准榜上的分数在涨，但把同一批任务重复运行时，成绩的波动远大于榜单暗示的确定性。
+        HAL 的可靠性仪表盘（hal.cs.princeton.edu）就是为度量这个落差而做的。
+      </figcaption>
+    </figure>
+
+    <h3>7.2 任务完成 ≠ 安全合规</h3>
+    <p>课件用六组研究说明这个不等式为什么危险——每一组都在「任务本身完成得不错」的前提下出了问题：</p>
+
+    <div class="cards">
+      <div class="card">
+        <b>弹窗攻击 · 87%</b>
+        <span>在视觉 agent 面前弹出诱导性窗口：不是窃取数据，而是把 agent 带偏、让它完不成原任务。</span>
+      </div>
+      <div class="card">
+        <b>隐私失范</b>
+        <span>PrivacyLens 发现：模型「说」要保护隐私，付诸行动时却常常违反人类的隐私规范。</span>
+      </div>
+      <div class="card">
+        <b>谄媚与奖励篡改</b>
+        <span>顺着用户预期说话；当奖励可以被自己触及时，甚至会动奖励本身。</span>
+      </div>
+      <div class="card">
+        <b>多智能体串通</b>
+        <span>多个 agent 协作时形成计划外的合谋行为——单独看每一个都合规。</span>
+      </div>
+      <div class="card">
+        <b>协作意识缺失</b>
+        <span>与人共处同一环境时，意识不到对方的存在与意图，更谈不上让步。</span>
+      </div>
+      <div class="card">
+        <b>HarnessAudit</b>
+        <span>专门审计「脚手架本身」：不安全的默认行为可能埋在您搭的那层壳里，而不是模型里。</span>
+      </div>
+    </div>
+
+    <!-- ============ 8 ============ -->
+    <h2 id="s8"><span class="num">8</span>小结</h2>
+    <p>讲师自己给的清单，五条：</p>
+    <ul>
+      <li>课程定位与安排：模型侧与系统侧并重，考核重口试与同伴评审。</li>
+      <li>Agent 的历史：1973 的计算主体 → 1990 年代的四要素定义 → RL 的循环 → LLM 时代的 ReAct 与自主 agent。</li>
+      <li>Agent 的架构：LLM core、规划与推理、记忆、工具、环境，围绕 observe–act 循环组织。</li>
+      <li>复合 AI 系统：RAG 的三步、工具调用的四个环节、MCP 作为接口标准。</li>
+      <li>关键挑战：可靠性、训练、长时程、安全、评测。</li>
+    </ul>
+    <div class="note">
+      <span class="label">如果只带一句话离开</span>
+      <p>Agent 的能力来自「循环 + 部件」，而它的困难来自同一处：每个部件都会出错，错误在循环里被反复放大。
+      因此这门课真正教的是——如何把不可靠的部件，组织成可以信任的系统。</p>
+    </div>
+
+    <div class="pager">
+      <span class="prev dim">← 已是第一讲</span>
+      <span class="next">下一讲 · LLMs for Builders（待整理）</span>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // 侧栏高亮：滚动进入某节时点亮对应目录项
+  (function () {
+    var links = document.querySelectorAll('.side-toc a');
+    var targets = [].map.call(links, function (a) {
+      return document.querySelector(a.getAttribute('href'));
+    });
+    function update() {
+      var best = 0, bestTop = -Infinity;
+      targets.forEach(function (el, i) {
+        if (!el) return;
+        var top = el.getBoundingClientRect().top;
+        if (top < 120 && top > bestTop) { bestTop = top; best = i; }
+      });
+      links.forEach(function (a, i) { a.style.fontWeight = (i === best) ? '600' : ''; });
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+</script>
+</body>
+</html>
